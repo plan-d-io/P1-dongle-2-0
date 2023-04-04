@@ -11,7 +11,7 @@ boolean checkUpdate(){
     }
     if(bundleLoaded){
       syslog("Checking repository for firmware update... ", 0);
-      String checkUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+      String checkUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle-2-0/";
       if(beta_fleet) checkUrl += "develop/version";
       else checkUrl += "main/version";
       syslog("Connecting to " + checkUrl, 0);
@@ -64,7 +64,7 @@ boolean startUpdate(){
         mqttPaused = true;
       }
       if(bundleLoaded){
-        String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+        String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle-2-0/";
         if(beta_fleet) baseUrl += "develop/bin/P1-dongle";
         else baseUrl += "main/bin/P1-dongle";
         String fileUrl = baseUrl + ".ino.bin"; //leaving this split up for now if we later want to do versioning in the filename
@@ -179,7 +179,7 @@ boolean finishUpdate(){
   }
   if(bundleLoaded){
     syslog("Finishing upgrade. Preparing to download static files.", 1);
-    String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+    String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle-2-0/";
     if(beta_fleet) baseUrl += "develop";
     else baseUrl += "main";
     String fileUrl = baseUrl + "/bin/files";
