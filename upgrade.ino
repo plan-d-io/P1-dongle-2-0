@@ -65,8 +65,8 @@ boolean startUpdate(){
       }
       if(bundleLoaded){
         String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle-2-0/";
-        if(beta_fleet) baseUrl += "develop/bin/P1-dongle";
-        else baseUrl += "main/bin/P1-dongle";
+        if(beta_fleet) baseUrl += "develop/bin/P1-dongle-2-0";
+        else baseUrl += "main/bin/P1-dongle-2-0";
         String fileUrl = baseUrl + ".ino.bin"; //leaving this split up for now if we later want to do versioning in the filename
         syslog("Getting new firmware over HTTPS/TLS", 0);
         syslog("Found new firmware at "+ fileUrl, 0);
