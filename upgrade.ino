@@ -11,8 +11,9 @@ boolean checkUpdate(){
     }
     if(bundleLoaded){
       syslog("Checking repository for firmware update... ", 0);
-      String checkUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle-2-0/";
-      if(beta_fleet) checkUrl += "develop/version";
+      String checkUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+      if(dev_fleet) checkUrl += "develop/version";
+      if(alpha_fleet) checkUrl += "alpha/version";
       else checkUrl += "main/version";
       syslog("Connecting to " + checkUrl, 0);
       if (https.begin(*client, checkUrl)) {  
@@ -64,9 +65,10 @@ boolean startUpdate(){
         mqttPaused = true;
       }
       if(bundleLoaded){
-        String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle-2-0/";
-        if(beta_fleet) baseUrl += "develop/bin/P1-dongle-2-0";
-        else baseUrl += "main/bin/P1-dongle-2-0";
+        String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+        if(dev_fleet) baseUrl += "develop/bin/P1-dongle";
+        if(alpha_fleet) baseUrl += "alpha/bin/P1-dongle";
+        else baseUrl += "main/bin/P1-dongle";
         String fileUrl = baseUrl + ".ino.bin"; //leaving this split up for now if we later want to do versioning in the filename
         syslog("Getting new firmware over HTTPS/TLS", 0);
         syslog("Found new firmware at "+ fileUrl, 0);
@@ -100,6 +102,8 @@ boolean startUpdate(){
                     update_start = false;
                     update_finish = true;
                     saveConfig();
+                    preferences.end();
+                    SPIFFS.end();
                     delay(500);
                     ESP.restart();
                   } else {
@@ -164,7 +168,7 @@ boolean startUpdate(){
   }
 }
 
-boolean finishUpdate(){
+boolean finishUpdate(bool restore){
   if(pls_en){
     detachInterrupt(32);
     detachInterrupt(26);
@@ -179,10 +183,13 @@ boolean finishUpdate(){
   }
   if(bundleLoaded){
     syslog("Finishing upgrade. Preparing to download static files.", 1);
-    String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle-2-0/";
-    if(beta_fleet) baseUrl += "develop";
+    String baseUrl = "https://raw.githubusercontent.com/plan-d-io/P1-dongle/";
+    if(dev_fleet) baseUrl += "develop";
+    else if(dev_fleet) baseUrl += "alpha";
     else baseUrl += "main";
-    String fileUrl = baseUrl + "/bin/files";
+    String fileUrl = baseUrl + "/bin/";
+    if(restore) fileUrl += "restore";
+    else fileUrl += "files";
     String payload;
     if (https.begin(*client, fileUrl)) {
       int httpCode = https.GET();
@@ -195,7 +202,6 @@ boolean finishUpdate(){
         syslog("Could not connect to repository, HTTPS code " + String(https.errorToString(httpCode)), 2);
       }
       https.end();
-      Serial.println(payload);
       unsigned long eof = payload.lastIndexOf('\n');
       if(eof > 0){
         syslog("Downloading static files", 2);
@@ -205,7 +211,9 @@ boolean finishUpdate(){
         unsigned long delimEnd = 0;
         while(delimEnd < eof){
           delimEnd = payload.indexOf('\n', delimStart);
-          String s = "/" + payload.substring(delimStart, delimEnd-1);
+          String s = "/";
+          if(restore) s += payload.substring(delimStart, delimEnd-1);
+          else s += payload.substring(delimStart, delimEnd);
           delimStart = delimEnd+1;
           fileUrl = baseUrl + "/data" + s;
           Serial.println(fileUrl);
@@ -255,9 +263,12 @@ boolean finishUpdate(){
   update_finish = false;
   if(filesUpdated){
     update_finish = false;
+    if(restore_finish) restore_finish = false;
     syslog("Static files successfully updated. Rebooting to finish update.", 1);
     last_reset = "Static files successfully updated. Rebooting to finish update.";
     saveConfig();
+    preferences.end();
+    SPIFFS.end();
     delay(500);
     ESP.restart();
   }
